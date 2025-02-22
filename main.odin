@@ -4,11 +4,13 @@ import "cards"
 
 main :: proc() {
     deck := cards.setup_deck()
-    defer delete(deck)
+    room := Room{}
 
-    cards.shuffle_deck(&deck)
+    cards.shuffle(&deck)
 
-    for card in deck {
-        fmt.println(card)
+    fill_room(&deck, &room)
+    fmt.println(room)
+    for ix in (0..<deck.len) {
+        fmt.println(cards.peek(deck, ix).?)
     }
 }
