@@ -2,7 +2,7 @@ package cards
 
 import rand "core:math/rand"
 
-Hand :: []Card
+Hand :: []Maybe(Card)
 Deck :: struct{
     head, len: uint,
     data: [64]Maybe(Card)
@@ -38,7 +38,7 @@ setup_deck :: proc() -> Deck {
     for suit in Suit {
         max := 14 if suit == .Clubs || suit == .Spades else 10
         for value in (2 ..= max) {
-            append(&deck, Card{suit = suit, value = Value(value)})
+            append(&deck, Card{suit = suit, value = value})
         }
     }
     return deck
