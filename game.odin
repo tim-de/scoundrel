@@ -16,6 +16,20 @@ EndState :: enum {
     Lose,
 }
 
+Move :: enum {
+    Run = -1,
+    Card0,
+    Card1,
+    Card2,
+    Card3,
+}
+// Todo:
+// - Give it some recognition for when a new room
+// is entered
+
+MoveInputFunc :: proc() -> Maybe(Move)
+GameDrawFunc :: proc(game: Game)
+
 setup_game :: proc() -> Game {
     game := Game {
         player = new_player(),
@@ -28,7 +42,7 @@ setup_game :: proc() -> Game {
     return game
 }
 
-test_completion :: proc(game: ^Game) -> bool {
+game_is_complete :: proc(game: ^Game) -> bool {
     if game.deck.len == 0 {
         game.state = .Win
         return true
@@ -39,4 +53,24 @@ test_completion :: proc(game: ^Game) -> bool {
     }
     game.state = .Ongoing
     return false
+}
+
+move_is_valid :: proc(game: ^Game, move: Move) -> bool {
+    switch move {
+    case .Run:
+        return game.player.can_run
+    case .Card0, .Card1, .Card2, .Card3:
+        _, exists := game.room[int(move)].?
+        return exists
+    }
+    panic("Invalid move")
+}
+
+make_move :: proc {
+    player_make_move,
+    game_make_move,
+}
+
+game_make_move :: proc(game: ^Game, move: Move) -> bool {
+    return make_move(&game.player, &game.room, &game.deck, move)
 }

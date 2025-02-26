@@ -8,16 +8,15 @@ import "cards"
 main :: proc() {
 
     // TODO:
-    // Clean up this mess.
-    // The gameplay loop wants to be in its own
-    // function somewhere, and the control flow
-    // is positively cursed.
+    // So the control flow is much fewer cursed
+    // but the whole thing needs to be neater
+    // Also could do with a gui
     
-    choicebuf := [256]byte{}
     game := setup_game()
-    for !test_completion(&game) {
+    for !game_is_complete(&game) {
         if count_room(&game.room) == 1 {
             fill_room(&game.deck, &game.room)
+            game.player.can_run = true
         }
         draw_room(game.room)
         fmt.printf("Life: %2d ", game.player.life)
@@ -40,30 +39,13 @@ main :: proc() {
         fmt.println("")
         input := false
         choice := 0
-        for !input {
-            fmt.print("-> ")
-            in_len, err := os.read(os.stdin, choicebuf[:])
-            if err != nil {
-                return
-            }
-            if choicebuf[0] == 'r' || choicebuf[0] == 'R' {
-                if game.player.ran_last {
-                    fmt.println("You cannot run, you have to fight!")
-                    continue
-                }
-                run_from_room(&game.player, &game.room, &game.deck)
-                break
-            }
-            choice, input = strconv.parse_int(string(choicebuf[:in_len-1]))
-            if choice < 1 || 4 < choice {
-                input = false
-            }
-            if !input {
-                fmt.printfln("Invalid selection '%s'", string(choicebuf[:in_len-1]))
-            } else {
-                play_card(&game.player, &game.room, choice-1)
-            }
+        move: Maybe(Move) = nil
+        for actual_move, ok := move.?;
+        !ok || !move_is_valid(&game, actual_move);
+        actual_move, ok = move.? {
+            move = get_move(game)
         }
+        make_move(&game, move.?)
     }
     switch game.state {
     case .Win:
@@ -72,5 +54,29 @@ main :: proc() {
         fmt.println("You Lose")
     case .Ongoing:
         fmt.println("How did you get here?")
+    }
+}
+
+get_move :: proc(game: Game) -> Maybe(Move) {
+    choicebuf := [8]byte{}
+    in_len: int
+    err: os.Error
+    for in_len == 0 || err != nil {
+        fmt.print("-> ")
+        in_len, err = os.read(os.stdin, choicebuf[:])
+        os.flush(os.stdin)
+    }
+    if rune(choicebuf[0]) == 'r' || rune(choicebuf[0]) == 'R' {
+        if !game.player.can_run {
+            fmt.println("You cannot run, you have to fight!")
+            return nil
+        } else {
+            return .Run
+        }
+    }
+    if 0x31 <= choicebuf[0] && choicebuf[0] <= 0x34 {
+        return Move(choicebuf[0] - 0x31)
+    } else {
+        return nil
     }
 }

@@ -10,14 +10,14 @@ Weapon :: struct {
 Player :: struct {
     life: int,
     weapon: Maybe(Weapon),
-    ran_last: bool,
+    can_run: bool,
 }
 
 new_player :: proc() -> Player {
     return Player{
         life = 20,
         weapon = nil,
-        ran_last = false,
+        can_run = true,
     }
 }
 
@@ -56,8 +56,18 @@ use_potion :: proc(player: ^Player, potion: cards.Card) {
     player.life = min(player.life, 20)
 }
 
-play_card :: proc(player: ^Player, room: ^Room, choice: int) -> bool {
-    assert(0 <= choice && choice < 4, "Invalid card selection")
+player_make_move :: proc(player: ^Player, room: ^Room, deck: ^cards.Deck, move: Move) -> bool {
+    switch move {
+    case .Run:
+        return run_from_room(player, room, deck)
+    case .Card0, .Card1, .Card2, .Card3:
+        return play_card(player, room, move)
+    }
+    panic("Invalid move")
+}
+
+play_card :: proc(player: ^Player, room: ^Room, move: Move) -> bool {
+    choice := int(move)
     if card, ok := room[choice].?; ok {
         switch card.suit {
         case .Diamonds:
@@ -68,6 +78,7 @@ play_card :: proc(player: ^Player, room: ^Room, choice: int) -> bool {
             fight_monster(player, card)
         }
         room[choice] = nil
+        player.can_run = false
         return true
     } else {
         return false
@@ -75,7 +86,7 @@ play_card :: proc(player: ^Player, room: ^Room, choice: int) -> bool {
 }
 
 run_from_room :: proc(player: ^Player, room: ^Room, deck: ^cards.Deck) -> bool {
-    if count_room(room) < 4 || player.ran_last {
+    if count_room(room) < 4 || !player.can_run {
         return false
     }
     cards.shuffle(room[:])
@@ -84,6 +95,6 @@ run_from_room :: proc(player: ^Player, room: ^Room, deck: ^cards.Deck) -> bool {
         room[ix] = nil
     }
     fill_room(deck, room)
-    player.ran_last = true
+    player.can_run = false
     return true
 }
