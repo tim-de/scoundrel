@@ -7,6 +7,6 @@ and there's a [really nice explanatory video on YouTube](https://www.youtube.com
 
 ## The State Of Affairs
 
-As mentioned, this is at a very early stage, and can basically only
-shuffle cards at this point, and doesn't even have any kind of interface,
-but that will hopefully change soon...
+The gameplay loop is mostly there now, but it's still a pretty unintuitive
+and not even remotely self-explanatory cli, so the addition of a gui will
+be a priority soon (if not the next thing to work on)
